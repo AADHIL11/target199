@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Target200 — daily study tracker for Class 12 students aiming for 199/200 in the March 2027 public exam." />
+  <title>Target200 — Study Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- MediaPipe Tasks Vision from jsDelivr CDN -->
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+
+  <!-- ===================== LOGIN SCREEN ===================== -->
+  <div id="login-screen" class="login-screen hidden">
+    <div class="login-card">
+      <div class="login-logo">
+        <span class="logo-mark">T</span>
+        <span class="logo-text">Target<strong>200</strong></span>
+      </div>
+      <p class="login-tagline">Class 12 · March 2027 · 199/200</p>
+
+      <form id="login-form" novalidate>
+        <div class="field-group">
+          <label for="inp-student-id">Student ID</label>
+          <input id="inp-student-id" type="text" placeholder="e.g. STU001" autocomplete="username" spellcheck="false" />
+        </div>
+        <div class="field-group">
+          <label for="inp-password">Password</label>
+          <input id="inp-password" type="password" placeholder="Your password" autocomplete="current-password" />
+        </div>
+        <p id="login-error" class="login-error hidden" role="alert"></p>
+        <button id="btn-login" type="submit" class="btn btn-primary btn-full">Log in</button>
+      </form>
+
+      <p class="login-hint">Demo: STU001 / maths199</p>
+    </div>
+  </div>
+
+  <!-- =================== WELCOME POPUP ===================== -->
+  <div id="welcome-popup" class="welcome-popup hidden" role="dialog" aria-modal="true" aria-labelledby="wp-days">
+    <div class="wp-inner">
+      <div class="wp-days-wrap">
+        <span id="wp-days" class="wp-days-number">—</span>
+        <span class="wp-days-label">days left</span>
+      </div>
+      <p class="wp-subtitle">Make today count.</p>
+      <p class="wp-goal">Today's goal: <strong>3 hours</strong> of focused study</p>
+      <button id="btn-start-studying" class="btn btn-primary btn-wide">Start studying</button>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APP SHELL =================== -->
+  <div id="app" class="app-shell hidden">
+
+    <!-- TOP BAR (mobile) -->
+    <header class="top-bar" id="top-bar">
+      <span class="app-name">Target<strong>200</strong></span>
+      <div class="top-bar-right">
+        <span id="days-chip" class="days-chip">— days left</span>
+        <button id="btn-settings" class="icon-btn" aria-label="Settings" title="Settings">
+          <!-- settings / cog icon -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- SETTINGS PANEL (slide-in) -->
+    <div id="settings-panel" class="settings-panel hidden" role="dialog" aria-label="Settings">
+      <div class="settings-inner">
+        <div class="settings-header">
+          <span>Settings</span>
+          <button id="btn-close-settings" class="icon-btn" aria-label="Close settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="settings-body">
+          <p class="settings-account-name" id="settings-name">—</p>
+          <p class="settings-account-id" id="settings-id">—</p>
+          <button id="btn-logout" class="btn btn-outline btn-full">Log out</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-body">
+      <!-- LEFT SIDEBAR (desktop) -->
+      <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+        <div class="sidebar-logo">
+          <span class="logo-mark-sm">T</span>
+          <span class="logo-text">Target<strong>200</strong></span>
+        </div>
+        <ul class="sidebar-nav" role="list">
+          <li><button class="nav-item active" data-page="today" aria-label="Today">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Today</span>
+          </button></li>
+          <li><button class="nav-item" data-page="study" aria-label="Study">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Study</span>
+          </button></li>
+          <li><button class="nav-item" data-page="syllabus" aria-label="Syllabus">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Syllabus</span>
+          </button></li>
+          <li><button class="nav-item" data-page="progress" aria-label="Progress">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Progress</span>
+          </button></li>
+        </ul>
+        <div class="sidebar-footer">
+          <span id="sidebar-days-chip" class="days-chip">— days left</span>
+          <button id="sidebar-settings-btn" class="icon-btn sidebar-settings-icon" aria-label="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </nav>
+
+      <!-- PAGE CONTAINER -->
+      <main class="page-container" id="page-container">
+
+        <!-- ============ TODAY PAGE ============ -->
+        <section id="page-today" class="page active">
+          <div class="page-inner">
+            <div class="today-header">
+              <div>
+                <h1 id="today-greeting" class="today-greeting">Good morning!</h1>
+                <p id="today-subline" class="today-subline">Let's make progress today.</p>
+              </div>
+            </div>
+
+            <!-- Goal ring + stats -->
+            <div class="today-top-grid">
+              <div class="card goal-ring-card">
+                <p class="card-label">Today's study time</p>
+                <div class="ring-wrap">
+                  <svg class="goal-ring" viewBox="0 0 120 120" aria-hidden="true">
+                    <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                    <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+                  </svg>
+                  <div class="ring-label-inner">
+                    <span id="ring-time-text" class="ring-time">0h 0m</span>
+                    <span class="ring-goal-text">of 3h goal</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="today-right-col">
+                <div class="card streak-card">
+                  <p class="card-label">Study streak</p>
+                  <p id="streak-number" class="streak-number">0</p>
+                  <p class="streak-unit">days</p>
+                </div>
+                <div class="card completion-card">
+                  <p class="card-label">Syllabus done</p>
+                  <p id="completion-pct" class="completion-pct">0%</p>
+                  <div class="completion-bar-wrap">
+                    <div id="completion-bar" class="completion-bar" style="width:0%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subject time breakdown -->
+            <div class="card subject-breakdown-card">
+              <p class="card-label">Time per subject today</p>
+              <div class="subject-rows" id="subject-rows-today">
+                <div class="subject-row">
+                  <span class="subject-dot dot-maths"></span>
+                  <span class="subject-row-name">Maths</span>
+                  <div class="subject-bar-track"><div class="subject-bar bar-maths" id="bar-maths" style="width:0%"></div></div>
+                  <span class="subject-row-time" id="time-maths">0m</span>
+                </div>
+                <div class="subject-row">
+                  <span class="subject-dot dot-physics"></span>
+                  <span class="subject-row-name">Physics</span>
+                  <div class="subject-bar-track"><div class="subject-bar bar-physics" id="bar-physics" style="width:0%"></div></div>
+                  <span class="subject-row-time" id="time-physics">0m</span>
+                </div>
+                <div class="subject-row">
+                  <span class="subject-dot dot-chem"></span>
+                  <span class="subject-row-name">Chemistry</span>
+                  <div class="subject-bar-track"><div class="subject-bar bar-chem" id="bar-chem" style="width:0%"></div></div>
+                  <span class="subject-row-time" id="time-chem">0m</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Today's topics checklist -->
+            <div class="card today-topics-card">
+              <div class="today-topics-header">
+                <p class="card-label" style="margin-bottom:0">Today's topics</p>
+                <button id="btn-add-topic" class="btn btn-sm btn-outline">+ Add topic</button>
+              </div>
+              <div id="today-topics-list" class="today-topics-list">
+                <p class="empty-state" id="today-topics-empty">No topics added yet. Hit "+ Add topic" to plan your day.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ STUDY PAGE ============ -->
+        <section id="page-study" class="page">
+          <div class="page-inner">
+
+            <!-- Step: Pick subject + topic -->
+            <div id="study-setup" class="study-setup">
+              <h1 class="page-title">Start a study session</h1>
+
+              <div class="card setup-card">
+                <p class="card-label">1. Choose a subject</p>
+                <div class="subject-buttons" id="subject-btns">
+                  <button class="subject-btn" data-subject="Maths">
+                    <span class="subject-dot dot-maths"></span> Maths
+                  </button>
+                  <button class="subject-btn" data-subject="Physics">
+                    <span class="subject-dot dot-physics"></span> Physics
+                  </button>
+                  <button class="subject-btn" data-subject="Chemistry">
+                    <span class="subject-dot dot-chem"></span> Chemistry
+                  </button>
+                </div>
+              </div>
+
+              <div class="card setup-card" id="chapter-topic-card" style="display:none">
+                <p class="card-label">2. Choose a chapter &amp; topic</p>
+                <select id="sel-chapter" class="select-field">
+                  <option value="">— Select chapter —</option>
+                </select>
+                <select id="sel-topic" class="select-field" style="display:none">
+                  <option value="">— Select topic —</option>
+                </select>
+              </div>
+
+              <button id="btn-start-session" class="btn btn-primary btn-wide" style="display:none">
+                Start session
+              </button>
+            </div>
+
+            <!-- Active session UI -->
+            <div id="study-session" class="study-session hidden">
+              <!-- Session header -->
+              <div class="session-header">
+                <div>
+                  <p id="session-subject-label" class="session-subject-label">Maths</p>
+                  <p id="session-topic-label" class="session-topic-label">Topic name</p>
+                </div>
+                <button id="btn-stop-session" class="btn btn-sm btn-outline-alert">Stop</button>
+              </div>
+
+              <!-- Big timer -->
+              <div class="card timer-card">
+                <div id="timer-display" class="timer-display">0:00:00</div>
+                <p id="timer-status-text" class="timer-status-text">Waiting for face detection…</p>
+                <div class="timer-actions">
+                  <button id="btn-break" class="btn btn-sm btn-outline">Take a break</button>
+                </div>
+              </div>
+
+              <!-- Face detection status banner -->
+              <div id="face-banner" class="face-banner hidden" role="status">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
+                Come back to your desk — timer paused
+              </div>
+
+              <!-- Camera error -->
+              <div id="camera-error" class="camera-error hidden" role="alert">
+                <p>Camera is unavailable or permission was denied.</p>
+                <button id="btn-retry-camera" class="btn btn-sm btn-primary">Retry camera</button>
+              </div>
+
+              <!-- Break overlay -->
+              <div id="break-overlay" class="break-overlay hidden" role="dialog" aria-label="Break time">
+                <div class="break-inner">
+                  <p class="break-heading">Break time!</p>
+                  <p class="break-sub">Step away, stretch, hydrate.</p>
+                  <div id="break-timer-display" class="break-timer">30:00</div>
+                  <p class="break-note">Timer will alert you when it's over.</p>
+                  <button id="btn-end-break" class="btn btn-primary">End break early</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Camera preview (always rendered, shown during session) -->
+            <div id="camera-preview-wrap" class="camera-preview-wrap hidden">
+              <video id="camera-video" class="camera-video" autoplay muted playsinline></video>
+              <div id="face-indicator" class="face-indicator no-face" title="Face detection status">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ SYLLABUS PAGE ============ -->
+        <section id="page-syllabus" class="page">
+          <div class="page-inner">
+            <h1 class="page-title">Syllabus</h1>
+
+            <!-- Overall progress -->
+            <div class="card overall-progress-card">
+              <div class="overall-progress-row">
+                <span class="card-label" style="margin-bottom:0">Overall completion</span>
+                <span id="overall-pct-text" class="overall-pct-text">0%</span>
+              </div>
+              <div class="overall-bar-track">
+                <div id="overall-progress-bar" class="overall-progress-fill" style="width:0%"></div>
+              </div>
+            </div>
+
+            <!-- Subject tabs -->
+            <div class="subject-tabs" role="tablist" id="syllabus-tabs">
+              <button role="tab" class="tab-btn active" data-subject="Maths" aria-selected="true">
+                <span class="subject-dot dot-maths"></span> Maths
+              </button>
+              <button role="tab" class="tab-btn" data-subject="Physics" aria-selected="false">
+                <span class="subject-dot dot-physics"></span> Physics
+              </button>
+              <button role="tab" class="tab-btn" data-subject="Chemistry" aria-selected="false">
+                <span class="subject-dot dot-chem"></span> Chemistry
+              </button>
+            </div>
+
+            <!-- Subject progress bar (under tabs) -->
+            <div class="subject-tab-progress">
+              <div class="subject-tab-progress-info">
+                <span id="tab-subject-name">Maths</span>
+                <span id="tab-subject-pct">0%</span>
+              </div>
+              <div class="subject-tab-bar-track">
+                <div id="tab-subject-bar" class="subject-tab-bar bar-maths" style="width:0%"></div>
+              </div>
+            </div>
+
+            <!-- Chapter list -->
+            <div id="chapter-list" class="chapter-list"></div>
+          </div>
+        </section>
+
+        <!-- ============ PROGRESS PAGE ============ -->
+        <section id="page-progress" class="page">
+          <div class="page-inner">
+            <h1 class="page-title">Progress</h1>
+
+            <!-- Period tabs -->
+            <div class="period-tabs" role="tablist" id="period-tabs">
+              <button role="tab" class="period-tab active" data-period="today" aria-selected="true">Today</button>
+              <button role="tab" class="period-tab" data-period="week" aria-selected="false">This week</button>
+              <button role="tab" class="period-tab" data-period="month" aria-selected="false">This month</button>
+            </div>
+
+            <!-- Total time card -->
+            <div class="card progress-total-card">
+              <p class="card-label">Total study time</p>
+              <p id="progress-total-time" class="progress-total-time">0h 0m</p>
+            </div>
+
+            <!-- Subject bars -->
+            <div class="card">
+              <p class="card-label">By subject</p>
+              <div class="progress-subject-rows" id="progress-subject-rows">
+                <div class="progress-subject-row">
+                  <div class="psrow-label"><span class="subject-dot dot-maths"></span><span>Maths</span></div>
+                  <div class="psrow-bar-wrap"><div class="psrow-bar bar-maths" id="prog-bar-maths" style="width:0%"></div></div>
+                  <span class="psrow-time" id="prog-time-maths">0m</span>
+                </div>
+                <div class="progress-subject-row">
+                  <div class="psrow-label"><span class="subject-dot dot-physics"></span><span>Physics</span></div>
+                  <div class="psrow-bar-wrap"><div class="psrow-bar bar-physics" id="prog-bar-physics" style="width:0%"></div></div>
+                  <span class="psrow-time" id="prog-time-physics">0m</span>
+                </div>
+                <div class="progress-subject-row">
+                  <div class="psrow-label"><span class="subject-dot dot-chem"></span><span>Chemistry</span></div>
+                  <div class="psrow-bar-wrap"><div class="psrow-bar bar-chem" id="prog-bar-chem" style="width:0%"></div></div>
+                  <span class="psrow-time" id="prog-time-chem">0m</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top topics -->
+            <div class="card">
+              <p class="card-label">Top topics by time</p>
+              <div id="top-topics-list" class="top-topics-list">
+                <p class="empty-state">No study time recorded yet.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main><!-- /page-container -->
+    </div><!-- /app-body -->
+
+    <!-- BOTTOM NAV (mobile) -->
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Main navigation">
+      <button class="bottom-nav-item active" data-page="today">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Today</span>
+      </button>
+      <button class="bottom-nav-item" data-page="study">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Study</span>
+      </button>
+      <button class="bottom-nav-item" data-page="syllabus">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>Syllabus</span>
+      </button>
+      <button class="bottom-nav-item" data-page="progress">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Progress</span>
+      </button>
+    </nav>
+
+  </div><!-- /app -->
+
+  <!-- ADD TOPIC MODAL -->
+  <div id="add-topic-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="add-topic-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="add-topic-title" class="modal-title">Add a topic</h2>
+        <button id="btn-close-add-topic" class="icon-btn" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label for="modal-sel-subject">Subject</label>
+          <select id="modal-sel-subject" class="select-field">
+            <option value="">— Subject —</option>
+            <option value="Maths">Maths</option>
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="modal-sel-chapter">Chapter</label>
+          <select id="modal-sel-chapter" class="select-field">
+            <option value="">— Chapter —</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="modal-sel-topic">Topic</label>
+          <select id="modal-sel-topic" class="select-field">
+            <option value="">— Topic —</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-add-topic-confirm" class="btn btn-primary btn-full">Add to today</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
